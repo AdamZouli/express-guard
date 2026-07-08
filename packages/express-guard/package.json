@@ -1,0 +1,65 @@
+{
+  "name": "@express-guard/core",
+  "version": "0.1.0",
+  "description": "Type-safe Express middleware to validate request body, query, params, and headers with Zod — with fully typed results.",
+  "keywords": [
+    "express",
+    "middleware",
+    "validation",
+    "zod",
+    "typescript",
+    "type-safe",
+    "request",
+    "schema",
+    "guard"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./helpers": {
+      "types": "./dist/helpers.d.ts",
+      "import": "./dist/helpers.js",
+      "require": "./dist/helpers.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rimraf dist"
+  },
+  "peerDependencies": {
+    "express": "^4.18.0 || ^5.0.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.0",
+    "@types/supertest": "^6.0.2",
+    "express": "^4.19.2",
+    "rimraf": "^5.0.5",
+    "supertest": "^6.3.4",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0",
+    "zod": "^3.23.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
