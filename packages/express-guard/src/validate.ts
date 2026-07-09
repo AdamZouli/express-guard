@@ -121,7 +121,7 @@ export type GuardedHandler<S extends GuardSchemas> = (
   req: GuardedRequest<S>,
   res: Response,
   next: NextFunction,
-) => void | Promise<void>;
+) => void | Response | Promise<void | Response>;
 
 /**
  * Combines validation and handling into a single, fully-typed route handler.

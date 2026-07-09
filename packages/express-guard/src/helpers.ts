@@ -70,8 +70,30 @@ export function pagination(
     }));
 }
 
+function buildDefaultedSort<const T extends readonly [string, ...string[]]>(
+  fields: T,
+  fallback: T[number],
+  order: "asc" | "desc",
+) {
+  return z.object({
+    sortBy: z.enum(fields).default(fallback),
+    order: z.enum(["asc", "desc"]).default(order),
+  });
+}
+
+function buildOptionalSort<const T extends readonly [string, ...string[]]>(
+  fields: T,
+  order: "asc" | "desc",
+) {
+  return z.object({
+    sortBy: z.enum(fields).optional(),
+    order: z.enum(["asc", "desc"]).default(order),
+  });
+}
+
 /**
  * Builds a sorting query schema constrained to an allow-list of fields.
+ * When `default` is supplied, `sortBy` is non-optional in the output type.
  *
  * @example
  * ```ts
@@ -81,17 +103,20 @@ export function pagination(
  */
 export function sort<const T extends readonly [string, ...string[]]>(
   fields: T,
+  options: { default: T[number]; defaultOrder?: "asc" | "desc" },
+): ReturnType<typeof buildDefaultedSort<T>>;
+export function sort<const T extends readonly [string, ...string[]]>(
+  fields: T,
+  options?: { default?: undefined; defaultOrder?: "asc" | "desc" },
+): ReturnType<typeof buildOptionalSort<T>>;
+export function sort<const T extends readonly [string, ...string[]]>(
+  fields: T,
   options: { default?: T[number]; defaultOrder?: "asc" | "desc" } = {},
 ) {
-  const sortBy =
-    options.default !== undefined
-      ? z.enum(fields).default(options.default)
-      : z.enum(fields).optional();
-
-  return z.object({
-    sortBy,
-    order: z.enum(["asc", "desc"]).default(options.defaultOrder ?? "asc"),
-  });
+  const order = options.defaultOrder ?? "asc";
+  return options.default !== undefined
+    ? buildDefaultedSort(fields, options.default, order)
+    : buildOptionalSort(fields, order);
 }
 
 /**
