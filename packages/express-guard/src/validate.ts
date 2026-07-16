@@ -14,7 +14,6 @@ import type {
   GuardSchemas,
   GuardedRequest,
   Segment,
-  ValidatedData,
 } from "./types.js";
 
 // Validate cheap-to-fail, position-independent segments first so that early
@@ -23,7 +22,7 @@ const SEGMENTS: readonly Segment[] = ["params", "query", "headers", "body"];
 
 interface ValidationOutcome {
   issues: ValidationIssue[];
-  valid: ValidatedData<GuardSchemas>;
+  valid: Partial<Record<Segment, unknown>>;
 }
 
 async function runValidation(
@@ -32,7 +31,7 @@ async function runValidation(
   abortEarly: boolean,
 ): Promise<ValidationOutcome> {
   const issues: ValidationIssue[] = [];
-  const parsed: Partial<Record<Segment, unknown>> = {};
+  const valid: Partial<Record<Segment, unknown>> = {};
 
   for (const segment of SEGMENTS) {
     const schema = schemas[segment];
@@ -42,19 +41,12 @@ async function runValidation(
     // (e.g. those using async `.refine`/`.transform`).
     const result = await schema.safeParseAsync(req[segment]);
     if (result.success) {
-      parsed[segment] = result.data;
+      valid[segment] = result.data;
     } else {
       issues.push(...toValidationIssues(segment, result.error));
       if (abortEarly) break;
     }
   }
-
-  const valid: ValidatedData<GuardSchemas> = {
-    body: schemas.body ? parsed.body : req.body,
-    query: schemas.query ? parsed.query : req.query,
-    params: schemas.params ? parsed.params : req.params,
-    headers: schemas.headers ? parsed.headers : req.headers,
-  };
 
   return { issues, valid };
 }
@@ -104,7 +96,7 @@ export function guard(
           dispatchError(new ValidationError(issues), options, req, res, next);
           return;
         }
-        (req as unknown as { valid: ValidatedData<GuardSchemas> }).valid =
+        (req as unknown as { valid: Partial<Record<Segment, unknown>> }).valid =
           valid;
         next();
       },

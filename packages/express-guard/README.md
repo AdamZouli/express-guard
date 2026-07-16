@@ -80,8 +80,10 @@ guard(schemas: GuardSchemas, options?: GuardOptions): RequestHandler
 ```
 
 `schemas` may include any of `body`, `query`, `params`, `headers`. On success the
-parsed output is written to `req.valid`; segments without a schema are passed
-through unchanged.
+parsed output is written to `req.valid`. **Only the segments you provide a schema
+for appear on `req.valid`** — accessing any other segment on `req.valid` is a
+compile-time error. Use `req.body`, `req.query`, `req.params`, and `req.headers`
+directly for segments you choose not to validate.
 
 ### Options
 
@@ -220,6 +222,41 @@ import type {
 function listUsers(req: GuardedRequest<{ query: typeof listQuery }>, res) {
   const { page } = req.valid.query;
 }
+```
+
+## Headers validation
+
+You can validate `headers` the same way as any other segment:
+
+```ts
+app.get(
+  "/admin/report",
+  handler(
+    {
+      headers: z.object({
+        "x-api-key": z.string().min(32),
+        "x-request-id": z.string().uuid().optional(),
+      }),
+    },
+    (req, res) => {
+      // req.valid.headers["x-api-key"] is typed as string
+      res.json({ ok: true });
+    },
+  ),
+);
+```
+
+> **Header names are always lowercase.** Express (and the HTTP/2 spec) normalises
+> all incoming header names to lower-case before they reach your middleware.
+> Always use lower-case keys in your header schemas — `"Authorization"` will
+> never match; `"authorization"` will.
+
+```ts
+// Wrong — will never validate because Express lowercases the key:
+z.object({ Authorization: z.string() });
+
+// Correct:
+z.object({ authorization: z.string() });
 ```
 
 ## Notes on Express 5

@@ -30,13 +30,16 @@ export type InferSegment<T, Fallback> = T extends z.ZodTypeAny
 /**
  * The fully-typed, validated request data derived from a {@link GuardSchemas}
  * definition. Available on `req.valid` after a guard runs successfully.
+ *
+ * Only the segments that have a corresponding schema are present — accessing
+ * a segment that was not validated is a compile-time error. For unvalidated
+ * segments use the original Express properties (`req.body`, `req.query`, etc.).
  */
-export interface ValidatedData<S extends GuardSchemas> {
-  body: InferSegment<S["body"], unknown>;
-  query: InferSegment<S["query"], unknown>;
-  params: InferSegment<S["params"], unknown>;
-  headers: InferSegment<S["headers"], unknown>;
-}
+export type ValidatedData<S extends GuardSchemas> = {
+  [K in Segment as S[K] extends z.ZodTypeAny ? K : never]: z.output<
+    Extract<S[K], z.ZodTypeAny>
+  >;
+};
 
 /**
  * An Express `Request` narrowed with a strongly-typed `valid` property that
@@ -84,15 +87,11 @@ declare global {
     interface Request {
       /**
        * Validated request data populated by an Express-Guard middleware.
+       * Only segments that were given a schema are present at runtime.
        * Prefer the {@link handler} wrapper or a {@link GuardedRequest} cast to
        * access this with precise types.
        */
-      valid: {
-        body: unknown;
-        query: unknown;
-        params: unknown;
-        headers: unknown;
-      };
+      valid: Partial<Record<Segment, unknown>>;
     }
   }
 }
